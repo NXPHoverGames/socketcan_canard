@@ -6,6 +6,8 @@ This repo is based off of Abraham Rodriguez's (abraham_rodriguez@nxp.com) libcan
 
 Socketcan_canard is a basic implementation of Libcanard in Linux using a virtual CAN bus (vcan0) with SocketCAN. The source code contains two main source files: test_canard_tx.c and test_canard_rx.c. The tx file packages a Heartbeat_1_0 message and sends it over the virtual CAN bus. The rx file receives this file and prints out the Heartbeat_1_0 information.
 
+![alt text](doc/demo_screenshot.png)
+
 ## Prerequisities
 
 You'll want to be running a Linux distribution with SocketCAN support, which is pretty much any Linux distro these days.

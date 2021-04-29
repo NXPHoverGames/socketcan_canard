@@ -10,7 +10,7 @@ output:
 	rm -rf bin
 	mkdir bin
 	gcc -I$(INCLUDE_PATH) test_canard_rx.c $(LIBCANARD_PATH)/canard.c $(O1HEAP_PATH)/o1heap.c -o bin/test_canard_rx
-	gcc -I$(INCLUDE_PATH) test_canard_tx.c $(LIBCANARD_PATH)/canard.c $(O1HEAP_PATH)/o1heap.c -o bin/test_canard_tx
+	gcc -I$(INCLUDE_PATH) -pthread test_canard_tx.c $(LIBCANARD_PATH)/canard.c $(O1HEAP_PATH)/o1heap.c -o bin/test_canard_tx
 
 clean: 
 	rm -rf bin/

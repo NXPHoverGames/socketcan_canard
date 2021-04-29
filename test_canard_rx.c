@@ -123,6 +123,7 @@ int main(void) {
 			test_heartbeat.health = RX_hbeat.health;
 			test_heartbeat.mode = RX_hbeat.mode;
 			
+            system("clear");
 			printf("Uptime: %d\n", test_heartbeat.uptime);
 			printf("Health: %d\n", test_heartbeat.health);
 			printf("Mode: %d\n\n", test_heartbeat.mode);
@@ -175,7 +176,7 @@ static void* memAllocate(CanardInstance* const ins, const size_t amount)
 static void memFree(CanardInstance* const ins, void* const pointer)
 {
     (void) ins;
-    o1heapFree(my_allocator, pointer);
+    o1heapFree(my_allocator, pointer); 
 }
 
 
