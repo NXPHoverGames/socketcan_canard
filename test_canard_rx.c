@@ -101,7 +101,6 @@ int main(void) {
 											 &transfer);
 		
 		// If for some reason Libcanard doesn't like that frame, break from the loop	
-		printf("Res1: %d\n", res1);							 								 
 		if(res1 < 0)
 		{
 		    printf("Fatal error, exiting\n"); 
@@ -117,7 +116,6 @@ int main(void) {
 			// De-serialize the heartbeat message
 			int8_t res2 = uavcan_node_Heartbeat_1_0_deserialize_(&RX_hbeat, transfer.payload, &hbeat_ser_buf_size);
 
-            printf("Res2: %d\n", res2);
 			if(res2 < 0){ abort(); } // Error occurred
 
 			// Update global hbeat message
@@ -127,7 +125,7 @@ int main(void) {
 			
 			printf("Uptime: %d\n", test_heartbeat.uptime);
 			printf("Health: %d\n", test_heartbeat.health);
-			printf("Mode: %d\n", test_heartbeat.mode);
+			printf("Mode: %d\n\n", test_heartbeat.mode);
 
 			// Deallocation of memory
 			ins.memory_free(&ins, (void*)transfer.payload);

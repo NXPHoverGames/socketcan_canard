@@ -176,6 +176,7 @@ void process_canard_TX_queue(void)
 	    printf("0x%03X [%d] ",frame.can_id, frame.can_dlc);
 	    for (uint8_t i = 0; i < frame.can_dlc; i++)
                 printf("%02X ",frame.data[i]);
+	    printf("\n");
             
 	    // Send CAN Frame
 	    if(write(s, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
