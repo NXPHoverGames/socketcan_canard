@@ -10,9 +10,12 @@
  *
  */
 
+// UAVCAN specific includes
 #include <uavcan/node/Heartbeat_1_0.h>
 #include <libcanard/canard.h>
 #include <o1heap/o1heap.h>
+
+// Linux specific includes
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,14 +31,13 @@
 
 // Function prototypes
 void *process_canard_TX_stack(void* arg);
+int open_vcan_socket(void);
+static void* memAllocate(CanardInstance* const ins, const size_t amount);
+static void memFree(CanardInstance* const ins, void* const pointer);
 
 // Create an o1heap and Canard instance
 O1HeapInstance* my_allocator;
 volatile CanardInstance ins;
-
-// Function prototypes for allocating memory to CanardInstance
-static void* memAllocate(CanardInstance* const ins, const size_t amount);
-static void memFree(CanardInstance* const ins, void* const pointer);
 
 // Transfer ID
 static uint8_t my_message_transfer_id = 0;
@@ -49,7 +51,6 @@ uint8_t hbeat_ser_buf[uavcan_node_Heartbeat_1_0_EXTENT_BYTES_];
 
 // vcan0 socket descriptor
 int s;
-int open_vcan_socket(void);
 
 int main(void)
 {
