@@ -31,7 +31,7 @@
 // Function prototypes for allocating memory to CanardInstance
 static void* memAllocate(CanardInstance* const ins, const size_t amount);
 static void memFree(CanardInstance* const ins, void* const pointer);
-void open_vcan_socket(void);
+int open_vcan_socket(void);
 
 // Create an o1heap and Canard instance
 O1HeapInstance* my_allocator;
@@ -72,7 +72,7 @@ int main(void) {
 	// SocketCAN specifics
     int nbytes;
     struct can_frame socketcan_frame;
-    
+
     // CanardFrame for reception
     CanardFrame received_canard_frame;
 
@@ -143,30 +143,35 @@ int main(void) {
 	return 0;
 }
 
-void open_vcan_socket(void)
+/* Open our SocketCAN socket (vcan0) */
+int open_vcan_socket(void)
 {
-    printf("Address for s (open): %ls\n", &s);
+    // Open a RAW CAN socket.
     if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0)
     {
         perror("Socket");
-        return;
+        return -1;
     }
     
+    // Construct an if request for vcan0 socket.
     struct ifreq ifr;
     strcpy(ifr.ifr_name, "vcan0");
     ioctl(s, SIOCGIFINDEX, &ifr);
     
+    // Create a socket address field for binding.
     struct sockaddr_can addr;
-    
     memset(&addr, 0, sizeof(addr));
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
     
+    // Bind the socket.
     if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         perror("Bind");
-        return;
+        return -1;
     }
+
+    return 0;
 }
 
 static void* memAllocate(CanardInstance* const ins, const size_t amount)

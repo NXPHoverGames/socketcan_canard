@@ -60,7 +60,6 @@ int main(void)
     // Initialize o1heap
     my_allocator = o1heapInit(mem_space, (size_t)4096, NULL, NULL);
     
-    printf("Address for s (main): %ls\n", &s);
     int sock_ret = open_vcan_socket();
 
     // Make sure our socket opens successfully.
@@ -155,7 +154,6 @@ int main(void)
 int open_vcan_socket(void)
 {
     // Open a RAW CAN socket.
-    printf("Address for s (open): %ls\n", &s);
     if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0)
     {
         perror("Socket");
