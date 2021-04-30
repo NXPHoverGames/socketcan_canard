@@ -143,4 +143,72 @@ Third, we need to initialize our CanardInstance by running calling `canardInit()
 
 Finally, we create a new thread for our `process_canard_TX_stack` function to run in the background. This allows the `CanardInstance` transfer stack to send raw CAN messages without blocking our main function, which would cause a delay in transfer, resulting in our RX node receiving messages late. This thread is spawned using a `pthread` which stands for "POSIX thread". You can learn about POSIX threads [here](https://www.cs.cmu.edu/afs/cs/academic/class/15492-f07/www/pthreads.html).
 
+## Main control loop
+```
+    // Main control loop. Run until break condition is found.
+    for(;;)
+    {
+        // Sleep for 1 second so our uptime increments once every second.
+        sleep(1);
+
+        // Initialize a Heartbeat message
+        uavcan_node_Heartbeat_1_0 test_heartbeat = {
+            .uptime = test_uptimeSec,
+            .health = { uavcan_node_Health_1_0_NOMINAL },
+            .mode = { uavcan_node_Mode_1_0_OPERATIONAL }
+        };
+
+        // Print data from Heartbeat message before it's serialized.
+        system("clear");
+        printf("Preparing to send the following Heartbeat message: \n");
+        printf("Uptime: %d\n", test_uptimeSec);
+        printf("Health: %d\n", uavcan_node_Health_1_0_NOMINAL);
+        printf("Mode: %d\n", uavcan_node_Mode_1_0_OPERATIONAL);
+
+        // Serialize the data using the included serialize function from the Heartbeat C header.
+        int8_t result1 = uavcan_node_Heartbeat_1_0_serialize_(&test_heartbeat, hbeat_ser_buf, &hbeat_ser_buf_size);
+```
+
+The main thread runs a loop that performs the necessary steps to push a `CanardTransfer` onto the transfer stack. First, we create a Heartbeat_1_0 message and pass data to the uptime, health, and mode fields. Next, we print the data that we passed to that data structure, and then we serialize the message by placing it into a data buffer. 
+
+```
+        // Create a CanardTransfer and give it the required data.
+        const CanardTransfer transfer = {
+            .timestamp_usec = time(NULL),
+            .priority = CanardPriorityNominal,
+            .transfer_kind = CanardTransferKindMessage,
+            .port_id = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_,
+            .remote_node_id = CANARD_NODE_ID_UNSET,
+            .transfer_id = my_message_transfer_id,
+            .payload_size = hbeat_ser_buf_size,
+            .payload = hbeat_ser_buf,
+        };
+          
+        // Increment our uptime and transfer ID.
+        ++test_uptimeSec;
+        ++my_message_transfer_id;
+
+        // Stop the loop once we hit 30s of transfer.
+        if(test_uptimeSec > 31)
+        {
+            printf("Reached 30s uptime! Exiting...\n");
+            exit_thread = 1;
+            break;
+        }
+        
+        // Push our CanardTransfer to the Libcanard instance's transfer stack.
+        int32_t result2 = canardTxPush((CanardInstance* const)&ins, &transfer);
+        
+        // Make sure our push onto the stack was successful.
+        if(result2 < 0)
+        {
+            printf("Pushing onto TX stack failed. Aborting...\n");
+            break;
+        }
+```
+
+Next we create a `CanardTransfer`. The data provided in this example is typical for a simple publisher. Note that we use Linux system time for the timestamp and we use the serialized heartbeat buffer for the payload. Once our `CanardTransfer` is configured we push it on the transfer stack for processing by our background thread.
+
+ 
+
 ### Copyright© 2021, NXP. All rights reserved.
