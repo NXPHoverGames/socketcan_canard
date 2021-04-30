@@ -10,9 +10,12 @@
  *
  */
 
+// UAVCAN specific includes
 #include "uavcan/node/Heartbeat_1_0.h"
 #include "libcanard/canard.h"
 #include "o1heap/o1heap.h"
+
+// Linux specific includes
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,26 +28,31 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
+// Function prototypes for allocating memory to CanardInstance
+static void* memAllocate(CanardInstance* const ins, const size_t amount);
+static void memFree(CanardInstance* const ins, void* const pointer);
+void open_vcan_socket(void);
+
 // Create an o1heap and Canard instance
 O1HeapInstance* my_allocator;
 CanardInstance ins;
 
-// Function prototypes for allocating memory to CanardInstance
-static void* memAllocate(CanardInstance* const ins, const size_t amount);
-static void memFree(CanardInstance* const ins, void* const pointer);
-
-// Global heartbeat message
-volatile uavcan_node_Heartbeat_1_0 test_heartbeat;
-
 // vcan0 socket descriptor
 int s;
-void open_vcan_socket(void);
 
 int main(void) {
 
 	void *mem_space = malloc(4096);
 	// Initialization of o1heap allocator for libcanard, requires 16-byte alignment, view linker file
 	my_allocator = o1heapInit(mem_space, (size_t)4096, NULL, NULL);
+
+	int sock_ret = open_vcan_socket();
+
+	if(sock_ret < 0)
+	{
+		perror("Socket open");
+		return -1;
+	}
 
 	// Initialization of a canard instance with the previous allocator
 	ins = canardInit(&memAllocate, &memFree);
@@ -67,16 +75,12 @@ int main(void) {
     
     // CanardFrame for reception
     CanardFrame received_canard_frame;
-    
-    open_vcan_socket();
 
 	// Block waiting for reception interrupts to happen
 	for(;;)
 	{
 	    // Read from CAN bus (this is a blocking call!)
-	    //printf("Reading...\n");
 		nbytes = read(s, &socketcan_frame, sizeof(struct can_frame));
-		//printf("Got data!\n");
 		
 		// If nbytes < 0, nothing came through, so return.
 		// Technically right now this is impossible because the read() function is blocking.
@@ -90,7 +94,6 @@ int main(void) {
 		received_canard_frame.extended_can_id = socketcan_frame.can_id;
 		received_canard_frame.payload_size = socketcan_frame.can_dlc;
 		received_canard_frame.timestamp_usec = time(NULL);
-		// Just copy pointer to socketcan_frame.data, the CanardFrame will pick it up
 		received_canard_frame.payload = socketcan_frame.data;
 
 		// Create a CanardTransfer and accept the data
@@ -116,17 +119,16 @@ int main(void) {
 			// De-serialize the heartbeat message
 			int8_t res2 = uavcan_node_Heartbeat_1_0_deserialize_(&RX_hbeat, transfer.payload, &hbeat_ser_buf_size);
 
-			if(res2 < 0){ abort(); } // Error occurred
-
-			// Update global hbeat message
-			test_heartbeat.uptime = RX_hbeat.uptime;
-			test_heartbeat.health = RX_hbeat.health;
-			test_heartbeat.mode = RX_hbeat.mode;
+			if(res2 < 0)
+			{  
+				printf("Error occurred deserializing data. Exiting...\n");
+				break;
+			} // Error occurred
 			
             system("clear");
-			printf("Uptime: %d\n", test_heartbeat.uptime);
-			printf("Health: %d\n", test_heartbeat.health);
-			printf("Mode: %d\n\n", test_heartbeat.mode);
+			printf("Uptime: %d\n", RX_hbeat.uptime);
+			printf("Health: %d\n", RX_hbeat.health);
+			printf("Mode: %d\n\n", RX_hbeat.mode);
 
 			// Deallocation of memory
 			ins.memory_free(&ins, (void*)transfer.payload);
