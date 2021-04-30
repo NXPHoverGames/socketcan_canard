@@ -43,14 +43,11 @@ For our function prototypes we have one for opening a SocketCAN (vcan0) socket, 
 O1HeapInstance* my_allocator;
 volatile CanardInstance ins;
 
-// Global heartbeat message
-volatile uavcan_node_Heartbeat_1_0 test_heartbeat;
-
 // vcan0 socket descriptor
 int s;
 ```
 
-The rest of the code here before the main function is just global variables for use within the program. We instantiate an O1HeapInstance for memory allocation, a `Heartbeat_1_0` message, and a SocketCAN descriptor for our vcan0 bus.
+The rest of the code here before the main function is just global variables for use within the program. We instantiate an `O1HeapInstance` for memory allocation, a `CanardInstance`, and a SocketCAN descriptor for our vcan0 bus.
 
 ## Setup within main()
 
