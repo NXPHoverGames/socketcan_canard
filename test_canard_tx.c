@@ -193,10 +193,13 @@ void *process_canard_TX_stack(void* arg)
                 struct can_frame frame;
 
                 // Give payload size.
-                frame.can_dlc = txf->payload_size;
+                // Libcanard states that payload_size != can_dlc. Use provided
+                // lookup table to correctly populate frame.can_dlc
+                frame.can_dlc = CanardCANLengthToDLC[txf->payload_size];
                 
                 // Give extended can id.
-                frame.can_id = txf->extended_can_id;
+                // Make sure to use CAN_EFF_FLAG or you won't get extended CAN ID.
+                frame.can_id = txf->extended_can_id | CAN_EFF_FLAG;
                 
                 // Copy transfer payload to SocketCAN frame.
                 memcpy(&frame.data[0], txf->payload, txf->payload_size);

@@ -88,7 +88,7 @@ int main(void) {
 
 		// Transfer all of the data from the CAN frame to a canard frame
 		received_canard_frame.extended_can_id = socketcan_frame.can_id;
-		received_canard_frame.payload_size = socketcan_frame.can_dlc;
+		received_canard_frame.payload_size = CanardCANDLCToLength[socketcan_frame.can_dlc];
 		received_canard_frame.timestamp_usec = time(NULL);
 		received_canard_frame.payload = socketcan_frame.data;
 

@@ -49,7 +49,7 @@ int open_can_socket(int *s)
     // Create a socket address field for binding.
     struct sockaddr_can addr;
     memset(&addr, 0, sizeof(addr));
-    addr.can_family = AF_CAN;
+    addr.can_family = PF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
 
     // Bind the socket.
