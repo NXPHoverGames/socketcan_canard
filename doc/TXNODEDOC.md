@@ -218,9 +218,9 @@ void *process_canard_TX_stack(void* arg)
                 printf(" Sent!\n\n");
                     
                 // Send CAN Frame.
-                if(write(s, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+                if(send_can_data(&s, &frame) < 0)
                 {
-                    perror("Write");
+                    printf("Fatal error sending CAN data. Exiting thread.\n");
                     return;
                 }
                 

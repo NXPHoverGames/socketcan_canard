@@ -14,6 +14,7 @@
 #include "uavcan/node/Heartbeat_1_0.h"
 #include "libcanard/canard.h"
 #include "o1heap/o1heap.h"
+#include "socketcan/socketcan.h"
 
 // Linux specific includes
 #include <time.h>
@@ -31,7 +32,6 @@
 // Function prototypes for allocating memory to CanardInstance
 static void* memAllocate(CanardInstance* const ins, const size_t amount);
 static void memFree(CanardInstance* const ins, void* const pointer);
-int open_vcan_socket(void);
 
 // Create an o1heap and Canard instance
 O1HeapInstance* my_allocator;
@@ -46,7 +46,7 @@ int main(void) {
 	// Initialization of o1heap allocator for libcanard, requires 16-byte alignment, view linker file
 	my_allocator = o1heapInit(mem_space, (size_t)4096, NULL, NULL);
 
-	int sock_ret = open_vcan_socket();
+	int sock_ret = open_can_socket(&s);
 
 	if(sock_ret < 0)
 	{
@@ -80,16 +80,12 @@ int main(void) {
 	for(;;)
 	{
 	    // Read from CAN bus (this is a blocking call!)
-		nbytes = read(s, &socketcan_frame, sizeof(struct can_frame));
-		
-		// If nbytes < 0, nothing came through, so return.
-		// Technically right now this is impossible because the read() function is blocking.
-		if(nbytes < 0)
+		if(recv_can_data(&s, &socketcan_frame))
 		{
-		    perror("Read");
-		    return 1;
+			printf("Fatal error receiving CAN data. Exiting.\n");
+			return -1;
 		}
-		
+
 		// Transfer all of the data from the CAN frame to a canard frame
 		received_canard_frame.extended_can_id = socketcan_frame.can_id;
 		received_canard_frame.payload_size = socketcan_frame.can_dlc;
@@ -141,37 +137,6 @@ int main(void) {
 	}
 
 	return 0;
-}
-
-/* Open our SocketCAN socket (vcan0) */
-int open_vcan_socket(void)
-{
-    // Open a RAW CAN socket.
-    if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0)
-    {
-        perror("Socket");
-        return -1;
-    }
-    
-    // Construct an if request for vcan0 socket.
-    struct ifreq ifr;
-    strcpy(ifr.ifr_name, "vcan0");
-    ioctl(s, SIOCGIFINDEX, &ifr);
-    
-    // Create a socket address field for binding.
-    struct sockaddr_can addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.can_family = AF_CAN;
-    addr.can_ifindex = ifr.ifr_ifindex;
-    
-    // Bind the socket.
-    if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        perror("Bind");
-        return -1;
-    }
-
-    return 0;
 }
 
 static void* memAllocate(CanardInstance* const ins, const size_t amount)

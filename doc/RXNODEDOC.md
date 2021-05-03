@@ -116,14 +116,10 @@ Finally, we create our frame structures for both SocketCAN and Libcanard.
 	for(;;)
 	{
 	    // Read from CAN bus (this is a blocking call!)
-		nbytes = read(s, &socketcan_frame, sizeof(struct can_frame));
-		
-		// If nbytes < 0, nothing came through, so return.
-		// Technically right now this is impossible because the read() function is blocking.
-		if(nbytes < 0)
+		if(recv_can_data(&s, &socketcan_frame))
 		{
-		    perror("Read");
-		    return 1;
+			printf("Fatal error receiving CAN data. Exiting.\n");
+			return -1;
 		}
 ```
 

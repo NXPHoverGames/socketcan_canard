@@ -14,6 +14,7 @@
 #include <uavcan/node/Heartbeat_1_0.h>
 #include <libcanard/canard.h>
 #include <o1heap/o1heap.h>
+#include <socketcan/socketcan.h>
 
 // Linux specific includes
 #include <time.h>
@@ -31,7 +32,6 @@
 
 // Function prototypes
 void *process_canard_TX_stack(void* arg);
-int open_vcan_socket(void);
 static void* memAllocate(CanardInstance* const ins, const size_t amount);
 static void memFree(CanardInstance* const ins, void* const pointer);
 
@@ -60,7 +60,7 @@ int main(void)
     // Initialize o1heap
     my_allocator = o1heapInit(mem_space, (size_t)4096, NULL, NULL);
     
-    int sock_ret = open_vcan_socket();
+    int sock_ret = open_can_socket(&s);
 
     // Make sure our socket opens successfully.
     if(sock_ret < 0)
@@ -150,37 +150,6 @@ int main(void)
     return 0;
 }
 
-/* Open our SocketCAN socket (vcan0) */
-int open_vcan_socket(void)
-{
-    // Open a RAW CAN socket.
-    if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0)
-    {
-        perror("Socket");
-        return -1;
-    }
-    
-    // Construct an if request for vcan0 socket.
-    struct ifreq ifr;
-    strcpy(ifr.ifr_name, "vcan0");
-    ioctl(s, SIOCGIFINDEX, &ifr);
-    
-    // Create a socket address field for binding.
-    struct sockaddr_can addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.can_family = AF_CAN;
-    addr.can_ifindex = ifr.ifr_ifindex;
-    
-    // Bind the socket.
-    if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        perror("Bind");
-        return -1;
-    }
-
-    return 0;
-}
-
 /* Standard memAllocate and memFree from o1heap examples. */
 static void* memAllocate(CanardInstance* const ins, const size_t amount)
 {
@@ -239,12 +208,12 @@ void *process_canard_TX_stack(void* arg)
                 printf(" Sent!\n\n");
                     
                 // Send CAN Frame.
-                if(write(s, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+                if(send_can_data(&s, &frame) < 0)
                 {
-                    perror("Write");
+                    printf("Fatal error sending CAN data. Exiting thread.\n");
                     return;
                 }
-                
+
                 // Pop the sent data off the stack and free its memory.
                 canardTxPop((CanardInstance* const)&ins);
                 ins.memory_free((CanardInstance* const)&ins, (CanardFrame*)txf);

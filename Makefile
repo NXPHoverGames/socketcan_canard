@@ -1,6 +1,7 @@
-LIBS=include/libcanard include/o1heap
+LIBS=include/libcanard include/o1heap include/socketcan
 LIBCANARD_PATH=include/libcanard
 O1HEAP_PATH=include/o1heap
+SOCKETCAN_PATH=include/socketcan
 INCLUDE_PATH=include/
 
 # for reference
@@ -9,8 +10,8 @@ INCLUDE_PATH=include/
 output:
 	rm -rf bin
 	mkdir bin
-	gcc -I$(INCLUDE_PATH) test_canard_rx.c $(LIBCANARD_PATH)/canard.c $(O1HEAP_PATH)/o1heap.c -o bin/test_canard_rx
-	gcc -I$(INCLUDE_PATH) -pthread test_canard_tx.c $(LIBCANARD_PATH)/canard.c $(O1HEAP_PATH)/o1heap.c -o bin/test_canard_tx
+	gcc -I$(INCLUDE_PATH) test_canard_rx.c $(LIBCANARD_PATH)/canard.c $(O1HEAP_PATH)/o1heap.c $(SOCKETCAN_PATH)/socketcan.c -o bin/test_canard_rx
+	gcc -I$(INCLUDE_PATH) -pthread test_canard_tx.c $(LIBCANARD_PATH)/canard.c $(O1HEAP_PATH)/o1heap.c $(SOCKETCAN_PATH)/socketcan.c -o bin/test_canard_tx
 
 clean: 
 	rm -rf bin/
