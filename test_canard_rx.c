@@ -29,6 +29,10 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
+// Defines
+#define O1HEAP_MEM_SIZE 4096
+#define NODE_ID 97
+
 // Function prototypes for allocating memory to CanardInstance
 static void* memAllocate(CanardInstance* const ins, const size_t amount);
 static void memFree(CanardInstance* const ins, void* const pointer);
@@ -42,9 +46,9 @@ int s;
 
 int main(void) {
 
-	void *mem_space = malloc(4096);
+	void *mem_space = malloc(O1HEAP_MEM_SIZE);
 	// Initialization of o1heap allocator for libcanard, requires 16-byte alignment, view linker file
-	my_allocator = o1heapInit(mem_space, (size_t)4096, NULL, NULL);
+	my_allocator = o1heapInit(mem_space, (size_t)O1HEAP_MEM_SIZE, NULL, NULL);
 
 	int sock_ret = open_can_socket(&s);
 
@@ -57,7 +61,7 @@ int main(void) {
 	// Initialization of a canard instance with the previous allocator
 	ins = canardInit(&memAllocate, &memFree);
 	ins.mtu_bytes = CANARD_MTU_CAN_FD;
-	ins.node_id = 97;
+	ins.node_id = NODE_ID;
 
 	// Subscribe to heartbeat messages within libCanard
 	CanardRxSubscription heartbeat_subscription;

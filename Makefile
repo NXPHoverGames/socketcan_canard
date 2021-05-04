@@ -1,4 +1,3 @@
-LIBS=include/libcanard include/o1heap include/socketcan
 LIBCANARD_PATH=include/libcanard
 O1HEAP_PATH=include/o1heap
 SOCKETCAN_PATH=include/socketcan

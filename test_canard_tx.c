@@ -30,6 +30,12 @@
 #include <linux/can/raw.h>
 #include <pthread.h>
 
+// Defines
+#define O1HEAP_MEM_SIZE 4096
+#define NODE_ID 96
+#define UPTIME_SEC_MAX 31
+#define TX_PROC_SLEEP_TIME 5000
+
 // Function prototypes
 void *process_canard_TX_stack(void* arg);
 static void* memAllocate(CanardInstance* const ins, const size_t amount);
@@ -55,10 +61,10 @@ int s;
 int main(void)
 {
 	// Allocate 4KB of memory for o1heap.
-    void *mem_space = malloc(4096);
+    void *mem_space = malloc(O1HEAP_MEM_SIZE);
     
     // Initialize o1heap
-    my_allocator = o1heapInit(mem_space, (size_t)4096, NULL, NULL);
+    my_allocator = o1heapInit(mem_space, (size_t)O1HEAP_MEM_SIZE, NULL, NULL);
     
     int sock_ret = open_can_socket(&s);
 
@@ -72,7 +78,7 @@ int main(void)
     // Initialize canard as CANFD and node no. 96
     ins = canardInit(&memAllocate, &memFree);
     ins.mtu_bytes = CANARD_MTU_CAN_FD;
-    ins.node_id = 96;
+    ins.node_id = NODE_ID;
 
     // Initialize thread for processing TX queue
     pthread_t thread_id;
@@ -126,7 +132,7 @@ int main(void)
         ++my_message_transfer_id;
 
         // Stop the loop once we hit 30s of transfer.
-        if(test_uptimeSec > 31)
+        if(test_uptimeSec > UPTIME_SEC_MAX)
         {
             printf("Reached 30s uptime! Exiting...\n");
             exit_thread = 1;
@@ -170,7 +176,7 @@ void *process_canard_TX_stack(void* arg)
     for(;;)
     {
         // Run every 5ms to prevent using too much CPU.
-        usleep(5000);
+        usleep(TX_PROC_SLEEP_TIME);
 
         // Check to see if main thread has asked this thread to stop.
         int* exit_thread = (int*)arg;
