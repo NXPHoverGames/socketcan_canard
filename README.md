@@ -4,6 +4,8 @@
 
 This repo is based off of Abraham Rodriguez's (abraham_rodriguez@nxp.com) libcanard_S32K1 example. You can find his code here: https://github.com/noxuz/libcanard_S32K1/
 
+Disclaimer: There may be incomplete or incorrect information in this repository. This project was done mainly to help both myself and others learn about UAVCAN and gain a better understanding of it. If there is anything terribly wrong with documentation or code in this repo, please create an issue or PR so I can fix my misconceptions! Thanks :)
+
 Socketcan_canard is a basic implementation of Libcanard in Linux using a virtual CAN bus (vcan0) with SocketCAN. The source code contains two main source files: test_canard_tx.c and test_canard_rx.c. The tx file packages a Heartbeat_1_0 message and sends it over the virtual CAN bus. The rx file receives this file and prints out the Heartbeat_1_0 information.
 
 ![alt text](doc/demo_screenshot.png)
